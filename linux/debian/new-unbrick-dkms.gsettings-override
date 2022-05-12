@@ -1,0 +1,5 @@
+[org.gnome.desktop.a11y.mouse]
+secondary-click-enabled=true
+
+[org.gnome.desktop.interface]
+overlay-scrolling=false

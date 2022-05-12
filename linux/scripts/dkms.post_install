@@ -1,0 +1,33 @@
+#!/bin/bash -e
+
+ARCH=$1
+KERNELVER=$2
+DKMS_TREE=$3
+SOURCE_TREE=$4
+KERNEL_SOURCE_DIR=$5
+# echo $ARCH $KERNELVER $DKMS_TREE $SOURCE_TREE $KERNEL_SOURCE_DIR
+# armv7l 5.15.32-v7l+ /var/lib/dkms /usr/src /lib/modules/5.15.32-v7l+/build
+
+PACKAGE_NAME=$6
+PACKAGE_VERSION=$7
+# echo $PACKAGE_NAME $PACKAGE_VERSION
+
+# /var/lib/dkms/new-unbrick/0.1.0/5.15.32-v7l+/armv7l/overlays/
+OVERLAYS_TREE=$DKMS_TREE/$PACKAGE_NAME/$PACKAGE_VERSION/$KERNELVER/$ARCH/overlays
+if [ -d $OVERLAYS_TREE ] && [ -d /boot/overlays ]
+then
+	for file in $OVERLAYS_TREE/*.dtbo
+	do
+		echo "Installing" /boot/overlays/${file##*/}
+		install ${file} /boot/overlays
+	done
+fi
+if [ -d $OVERLAYS_TREE ] && [ -d /boot/firmware/overlays ]
+then
+	for file in $OVERLAYS_TREE/*.dtbo
+	do
+		echo "Installing" /boot/firmware/overlays/${file##*/}
+		install ${file} /boot/firmware/overlays
+	done
+fi
+rm -rf $OVERLAYS_TREE

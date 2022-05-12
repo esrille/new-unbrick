@@ -1,0 +1,86 @@
+#!/bin/sh -e
+
+if [ -e /boot/config.txt ]
+then
+  CONFIG=/boot/config.txt
+elif [ -e /boot/firmware/config.txt ]
+then
+  CONFIG=/boot/firmware/config.txt
+else
+  exit 1
+fi
+
+SETTINGS="# Settings for Esrille New Unbrick
+
+[pi4]
+
+# Disable the power LED on Raspberry Pi 4B
+dtparam=pwr_led_trigger=none
+dtparam=pwr_led_activelow=off
+
+# Enable 1024x600 DPI panel
+dtoverlay=vc4-kms-dpi-generic
+dtparam=clock-frequency=48787200
+dtparam=hactive=1024,hfp=48,hsync=32,hbp=216
+dtparam=vactive=600,vfp=2,vsync=14,vbp=0
+dtparam=width-mm=154,height-mm=86
+
+# Enable the fan at GPIO 25
+dtoverlay=gpio-fan,gpiopin=25,temp=80000
+
+# Enable power-off detection using GPIO 26
+dtoverlay=gpio-poweroff,gpio_pin=26
+
+# Enable the front action LED of New Unbrick using GPIO 27
+dtoverlay=act-led,gpio=27,activelow=on
+
+# Enable New Unblick device drivers
+# Params: rated_capacity    The total capacity of the AA batteries in mAh (default 20000).
+dtoverlay=eub5_mobo
+dtparam=rated_capacity=20000
+
+# Enable I2C6
+dtoverlay=i2c6,baudrate=400000
+"
+
+disable_i2c() {
+  if grep -q "^dtparam=i2c_arm" $CONFIG ; then
+    sed $CONFIG -i -e "s/^dtparam=i2c_arm.*/#&/"
+  fi
+}
+
+disable_i2s() {
+  if grep -q "^dtparam=i2s" $CONFIG ; then
+    sed $CONFIG -i -e "s/^dtparam=i2s.*/#&/"
+  fi
+}
+
+disable_spi() {
+  if grep -q "^dtparam=spi" $CONFIG ; then
+    sed $CONFIG -i -e "s/^dtparam=spi.*/#&/"
+  fi
+
+}
+
+remove_fan() {
+  if grep -q "^dtoverlay=gpio-fan" $CONFIG ; then
+    sed $CONFIG -i -e "/^dtoverlay=gpio-fan.*/d"
+  fi
+}
+
+if [ $(id -u) -ne 0 ]
+then
+  echo "Script must be run as root. Try 'sudo new-unbrick-config'."
+  exit 1
+fi
+
+disable_i2c
+disable_i2s
+disable_spi
+
+sed $CONFIG -i -e "/^# Settings for Esrille New Unbrick/,\$d"
+remove_fan
+
+cat $CONFIG >> $CONFIG.bak
+echo -n "$SETTINGS" >> $CONFIG.bak
+mv $CONFIG.bak $CONFIG

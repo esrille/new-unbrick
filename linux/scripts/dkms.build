@@ -1,0 +1,26 @@
+#!/bin/bash -e
+
+ARCH=$1
+KERNELVER=$2
+DKMS_TREE=$3
+SOURCE_TREE=$4
+KERNEL_SOURCE_DIR=$5
+# echo $ARCH $KERNELVER $DKMS_TREE $SOURCE_TREE $KERNEL_SOURCE_DIR
+# armv7l 5.15.32-v7l+ /var/lib/dkms /usr/src /lib/modules/5.15.32-v7l+/build
+# aarch64 5.10.0-14-arm64 /var/lib/dkms /usr/src /lib/modules/5.10.0-14-arm64/build
+
+PACKAGE_NAME=$6
+PACKAGE_VERSION=$7
+# echo $PACKAGE_NAME $PACKAGE_VERSION
+
+make -C $KERNEL_SOURCE_DIR M=$DKMS_TREE/$PACKAGE_NAME/$PACKAGE_VERSION/build
+OVERLAYS_TREE=$DKMS_TREE/$PACKAGE_NAME/$PACKAGE_VERSION/$KERNELVER/$ARCH/overlays
+if [ -d arch/arm/boot/dts/overlays ]
+then
+	mkdir -p $OVERLAYS_TREE
+	for file in arch/arm/boot/dts/overlays/*.dtbo
+	do
+		echo "Installing" $OVERLAYS_TREE/${file##*/}
+		install $file $OVERLAYS_TREE
+	done
+fi
