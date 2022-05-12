@@ -1,0 +1,60 @@
+// Definitions for Esrille New Unbrick Multi-Function Driver
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "brcm,bcm2708";
+
+	fragment@0 {
+		target = <&i2c6>;
+		__overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "okay";
+
+			eub5_mobo: eub5_mobo@16 {
+				compatible = "esrille,eub5_mobo";
+				reg = <0x10>;
+				status = "okay";
+				backlight {
+					compatible = "esrille,eub5_backlight";
+				};
+				rtc {
+					compatible = "esrille,eub5_rtc";
+				};
+				eub5_battery: eub5_battery {
+					compatible = "esrille,eub5_battery";
+					esrille,rated_capacity = /bits/ 16 <20000>;
+				};
+				eub5_pad: eub5_pad {
+					compatible = "esrille,eub5_pad";
+					esrille,buttons = /bits/ 16 <42 125 116>;
+				};
+				eub5_touch: eub5_touch {
+					compatible = "esrille,eub5_touch";
+					esrille,touch_min_x = /bits/ 16 <160>;
+					esrille,touch_max_x = /bits/ 16 <3800>;
+					esrille,touch_min_y = /bits/ 16 <330>;
+					esrille,touch_max_y = /bits/ 16 <3360>;
+					esrille,touch_res_x = /bits/ 32 <24>;
+					esrille,touch_res_y = /bits/ 32 <35>;
+					esrille,touch_thresh = /bits/ 16 <0xf90>;
+				};
+			};
+		};
+	};
+	__overrides__ {
+		addr = <&eub5_mobo>, "reg:0";
+		rated_capacity = <&eub5_battery>,"esrille,rated_capacity;0";
+		shift_btn = <&eub5_pad>,"esrille,buttons;0";
+		meta_btn = <&eub5_pad>,"esrille,buttons;2";
+		power_btn = <&eub5_pad>,"esrille,buttons;4";
+		touch_min_x = <&eub5_touch>,"esrille,touch_min_x;0";
+		touch_max_x = <&eub5_touch>,"esrille,touch_max_x;0";
+		touch_min_y = <&eub5_touch>,"esrille,touch_min_y;0";
+		touch_max_y = <&eub5_touch>,"esrille,touch_max_y;0";
+		touch_res_x = <&eub5_touch>,"esrille,touch_res_x:0";
+		touch_res_y = <&eub5_touch>,"esrille,touch_res_y:0";
+		touch_thresh = <&eub5_touch>,"esrille,touch_thresh;0";
+	};
+};

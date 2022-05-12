@@ -1,0 +1,12 @@
+Source: new-unbrick
+Section: contrib/kernel
+Priority: optional
+Maintainer: Esrille Inc. <info@esrille.com>
+Build-Depends: debhelper (>= 9), dkms
+Standards-Version: 3.9.6
+
+Package: new-unbrick-dkms
+Architecture: all
+Depends: dkms, ${misc:Depends}
+Recommends: raspberrypi-kernel-headers
+Description: DKMS package for esrille new unbrick
