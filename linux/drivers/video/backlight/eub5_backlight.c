@@ -29,7 +29,7 @@
 
 #include <linux/mfd/eub5_mobo.h>
 
-#define DEFAULT_BRIGHTNESS	46	// in % about 150 cd/m²
+#define DEFAULT_BRIGHTNESS	51	// in % about 150 cd/m²
 
 struct eub5_backlight {
 	struct eub5_mobo_dev	*mfd;
@@ -127,17 +127,18 @@ static void eub5_backlight_shutdown(struct platform_device *pdev)
 {
 	struct eub5_backlight *gbl = platform_get_drvdata(pdev);
 
-        /* Raspberry Pi 4B turns off 3.3V during reboot:
+        /* turn off the backlight */
+        eub5_backlight_write(gbl, EUB_MOBO_REG_BRIGHTNESS, 0,
+			     EUB_MOBO_I2C_RETRY | EUB_MOBO_I2C_CRC);
+
+	/* wait for two frame */
+        msleep(34);
+
+        /* Raspberry Pi 4 Model B turns off 3.3V during reboot:
          *   https://github.com/raspberrypi/linux/issues/3065
-         * Therefore, the LCD panel must also be turned off during the reboot
-         * process.
+         * Turn off the LCD panel before rebooting.
          */
 	eub5_backlight_write(gbl, EUB_MOBO_REG_DISPLAY, 0,
-			     EUB_MOBO_I2C_RETRY | EUB_MOBO_I2C_CRC);
-        /* wait for one frame */
-        msleep(20);
-        /* then, turn off the backlight */
-        eub5_backlight_write(gbl, EUB_MOBO_REG_BRIGHTNESS, 0,
 			     EUB_MOBO_I2C_RETRY | EUB_MOBO_I2C_CRC);
 }
 
