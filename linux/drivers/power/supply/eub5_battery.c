@@ -41,8 +41,8 @@
 #define BATTERY_MAX		14400000
 #define BATTERY_NO_LOAD		  460000
 
-#define FVR_GAIN		 4096000	/* units of µV */
-#define CC_THRESH                 450000	/* units of µV */
+#define ADC_REF		 	 5100000	/* units of µV */
+#define CC_THRESH                 850000	/* units of µV */
 
 #define IS_ONLINE(power)	(CC_THRESH <= (power)->cc1 || CC_THRESH <= (power)->cc2)
 
@@ -109,10 +109,10 @@ static void eub5_battery_update_status(struct eub5_power *power)
 	if (ret < 0)
 		return;
 
-	voltage = FVR_GAIN * regs[0] / 255; /* µV */
+	voltage = ADC_REF * regs[0] / 255; /* µV */
 	voltage = (FACTOR * voltage) / FACTOR_DIV;
-	cc1 = FVR_GAIN * regs[1] / 255;
-	cc2 = FVR_GAIN * regs[2] / 255;
+	cc1 = ADC_REF * regs[1] / 255;
+	cc2 = ADC_REF * regs[2] / 255;
 	if (CC_THRESH <= cc1 || CC_THRESH <= cc2) {
 		voltage -= BATTERY_NO_LOAD;
 		if (voltage < 0)
