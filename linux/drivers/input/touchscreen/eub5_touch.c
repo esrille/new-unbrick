@@ -34,8 +34,8 @@
 
 #ifdef TFT_070
 
-#define MIN_X		160
-#define MAX_X		3800
+#define MIN_X		150
+#define MAX_X		3850
 #define PLAY_X		50
 #define MIN_Y		330
 #define MAX_Y		3360
@@ -45,6 +45,7 @@
 #define RES_Y		35	/* [units/mm] (MAX_Y - MIN_Y) / 85.92 */
 
 #define THRESH_Z	0xf90
+#define THRESH_NOISE	10000
 
 #endif
 
@@ -61,6 +62,7 @@
 #define RES_Y		22	/* [units/mm] */
 
 #define THRESH_Z	0xf50
+#define THRESH_NOISE	10000
 
 #endif
 
@@ -86,10 +88,12 @@ struct eub5_touch {
 	struct input_dev	*pen_dev;
 	struct input_dev	*pad_dev;
 	int			irq;
-	int			x;
-	int			y;
-	int			touch;		// previous touch state
+	int			x;		// previous reported x position
+	int			y;		// previous reported y position
 	u8			buttons;	// previous button state
+	int			xr[3];		// previous x positions
+	int			yr[3];		// previous y positions
+	int			n;
 };
 
 static int __maybe_unused eub5_touch_reg_get(struct eub5_touch *touch, u8 reg, u8 *val, u8 flags)
@@ -102,6 +106,24 @@ static int __maybe_unused eub5_touch_reg_set(struct eub5_touch *touch, u8 reg, u
 	return touch->mfd->write_dev(touch->mfd, reg, 1, &val, flags);
 }
 
+static int outlying(const int* x, const int* y)
+{
+	int d[3];
+	int dx, dy;
+
+	dx = x[0] - x[1];
+	dy = y[0] - y[1];
+	d[0] = dx * dx + dy * dy;
+	dx = x[1] - x[2];
+	dy = y[1] - y[2];
+	d[1] = dx * dx + dy * dy;
+	dx = x[2] - x[0];
+	dy = y[2] - y[0];
+	d[2] = dx * dx + dy * dy;
+	/* if d[0] is the smallest, point (x[2], y[2]) is outlying */
+	return (d[0] < d[1] && d[0] < d[2]) ? d[1] : 0;
+}
+
 static void eub5_touch_get_input(struct eub5_touch *touch)
 {
 	struct input_dev *pen_dev = touch->pen_dev;
@@ -110,6 +132,7 @@ static void eub5_touch_get_input(struct eub5_touch *touch)
 	s32 x, y, z;
 	u8 buttons;
 	int ret;
+	int drop;
 
 	ret = touch->mfd->read_dev(touch->mfd, EUB_MOBO_REG_BUTTONS, sizeof(val), val,
 				   EUB_MOBO_I2C_RETRY | EUB_MOBO_I2C_CRC);
@@ -133,8 +156,26 @@ static void eub5_touch_get_input(struct eub5_touch *touch)
 
 	/* Report the pen event */
 	if (z <= thresh) {
-		/* Report the positions */
-		if (touch->touch) {
+		/* drop an outlying point */
+		touch->xr[touch->n] = x;
+		touch->yr[touch->n] = y;
+		if (++touch->n < 3)
+			drop = 1;
+		else {
+			drop = outlying(touch->xr, touch->yr);
+			touch->n = 2;
+			if (drop < THRESH_NOISE) {
+				touch->xr[0] = touch->xr[1];
+				touch->yr[0] = touch->yr[1];
+				touch->xr[1] = touch->xr[2];
+				touch->yr[1] = touch->yr[2];
+			}
+		}
+		dev_dbg(touch->dev, "touch: (%d, %d, %03x) %02x, n: %d, drop: %d\n", x, y, z, buttons, touch->n, drop);
+		if (!drop) {
+			/* Report the positions */
+			touch->x = x;
+			touch->y = y;
 			// low pass filter
 			if (touch->x == -1 || touch->y == -1) {
 				touch->x = x;
@@ -147,16 +188,10 @@ static void eub5_touch_get_input(struct eub5_touch *touch)
 			input_report_key(pen_dev, BTN_TOOL_PEN, 1);
 			input_report_abs(pen_dev, ABS_X, touch->x);
 			input_report_abs(pen_dev, ABS_Y, touch->y);
-		} else {
-			/* Wait for the values to settle. */
-			input_report_key(pen_dev, BTN_TOUCH, 0);
-			input_report_key(pen_dev, BTN_TOOL_PEN, buttons);
 		}
-		touch->touch = 1;
 	} else {
 		/* If z is at Vdd, the X-plate and Y-plate are not touching. */
-		touch->touch = 0;
-		touch->x = touch->y = -1;
+		touch->n = 0;
 		input_report_key(pen_dev, BTN_TOUCH, 0);
 		input_report_key(pen_dev, BTN_TOOL_PEN, buttons);
 	}
@@ -214,8 +249,8 @@ static void eub5_touch_configure(struct eub5_touch *touch)
 {
 	touch->x = -1;
 	touch->y = -1;
-	touch->touch = 0;
 	touch->buttons = 0;
+	touch->n = 0;
 }
 
 static irqreturn_t eub5_touch_isr(int irq, void *id)

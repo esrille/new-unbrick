@@ -32,8 +32,8 @@
 				};
 				eub5_touch: eub5_touch {
 					compatible = "esrille,eub5_touch";
-					esrille,touch_min_x = /bits/ 16 <160>;
-					esrille,touch_max_x = /bits/ 16 <3800>;
+					esrille,touch_min_x = /bits/ 16 <150>;
+					esrille,touch_max_x = /bits/ 16 <3850>;
 					esrille,touch_min_y = /bits/ 16 <330>;
 					esrille,touch_max_y = /bits/ 16 <3360>;
 					esrille,touch_res_x = /bits/ 32 <24>;
