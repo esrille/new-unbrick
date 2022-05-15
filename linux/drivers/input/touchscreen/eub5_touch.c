@@ -35,14 +35,14 @@
 #ifdef TFT_070
 
 #define MIN_X		150
-#define MAX_X		3850
+#define MAX_X		3870
 #define PLAY_X		50
-#define MIN_Y		330
-#define MAX_Y		3360
+#define MIN_Y		300
+#define MAX_Y		3420
 #define PLAY_Y		30
 
 #define RES_X		24	/* [units/mm] (MAX_X - MIN_X) / 154.21 */
-#define RES_Y		35	/* [units/mm] (MAX_Y - MIN_Y) / 85.92 */
+#define RES_Y		36	/* [units/mm] (MAX_Y - MIN_Y) / 85.92 */
 
 #define THRESH_Z	0xf90
 #define THRESH_NOISE	10000
@@ -277,13 +277,14 @@ static int eub5_touch_probe(struct platform_device *pdev)
 		of_property_read_s32(pdev->dev.of_node, "esrille,touch_res_y", &res_y);
 		of_property_read_u16(pdev->dev.of_node, "esrille,touch_thresh", &thresh);
 		of_property_read_u16_array(pdev->dev.of_node, "esrille,buttons", pad_buttons, 3);
-		dev_info(&pdev->dev,
-			"min_x: %u, max_x: %u, min_y: %u, max_y: %u\n"
-			"res_x: %d, res_y: %d, thresh: %u\n"
-			"buttons: %u, %u, %u\n",
-			min_x, max_x, min_y, max_y, res_x, res_y, thresh,
-			pad_buttons[0], pad_buttons[1], pad_buttons[2]);
 	}
+
+	dev_info(&pdev->dev,
+		"min_x: %u, max_x: %u, min_y: %u, max_y: %u\n"
+		"res_x: %d, res_y: %d, thresh: %u\n"
+		"buttons: %u, %u, %u\n",
+		min_x, max_x, min_y, max_y, res_x, res_y, thresh,
+		pad_buttons[0], pad_buttons[1], pad_buttons[2]);
 
 	touch = devm_kzalloc(dev, sizeof(struct eub5_touch), GFP_KERNEL);
 	if (!touch)
