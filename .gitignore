@@ -6,7 +6,11 @@
 *.deb
 *.debhelper
 *.dsc
+*.dtbo
+*.ko
 *.log
+*.mod
+*.mod.c
 *.o
 *.orig
 *.out
@@ -18,3 +22,5 @@
 linux/debian/debhelper-build-stamp
 linux/debian/files
 linux/debian/new-unbrick-dkms/
+linux/Module.symvers
+linux/modules.order

@@ -1,3 +1,9 @@
+new-unbrick (1.0.0) unstable; urgency=low
+
+  * See https://github.com/esrille/new-unbrick/releases/tag/v1.0.0
+
+ -- Esrille Inc. <info@esrille.com>  Mon, 20 Jun 2022 08:00:00 +0900
+
 new-unbrick (0.1.0) unstable; urgency=low
 
   * Initial package.
